@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cognitive Behavioral Therapist</title>
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;  /* Default text color for body */
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    /* Main chat container */
+    #chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+      border-radius: 10px;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Chat history container */
+    #conversation {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #333; /* Ensure text color is visible */
+    }
+
+    /* User's messages */
+    .user-message {
+      background-color: #dcf8c6; /* Light green (WhatsApp-like) */
+      align-self: flex-end; /* Align user messages to the right */
+      margin-left: 50px;
+    }
+
+    /* Bot's messages */
+    .bot-message {
+      background-color: #ece5dd; /* Light grey (WhatsApp-like) */
+      align-self: flex-start; /* Align bot messages to the left */
+      margin-right: 50px;
+    }
+
+    /* Input form and button */
+    #chatForm {
+      display: flex;
+      padding: 10px;
+      background-color: #ffffff;
+      border-top: 1px solid #ddd;
+    }
+
+    #message {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+    }
+
+    #send-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+
+    #send-button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Make the conversation scrollable */
+    #conversation {
+      overflow-y: auto;
+      max-height: 70vh;  /* Limit height of the conversation */
+    }
+  </style>
+</head>
+<body>
+  <div class="lg:w-2/4 mt-6 mx-4 lg:mx-auto p-6 bg-white rounded-xl shadow-lg">
+    <h1 class="text-2xl font-semibold text-center text-gray-800 mb-4">Cognitive Behavioral Therapist</h1>
+  </div>
+
+  <!-- Chat container -->
+  <div id="chat-container">
+    <div id="conversation"></div> <!-- Message history will appear here -->
+    
+    <!-- Input form for the user to type a message -->
+    <form id="chatForm">
+      <input type="text" id="message" name="message" placeholder="Type a message..." required>
+      <button type="submit" id="send-button">Send</button>
+    </form>
+  </div>
+
+  <script>
+    // Get references to the form, response paragraph, and conversation display area
+    const chatForm = document.getElementById("chatForm");
+    const conversationDiv = document.getElementById("conversation");
+
+    // Display the conversation (user's and bot's messages)
+    function displayConversation(conversation) {
+      console.log(conversation);  // Debugging: log the conversation to the console
+      conversationDiv.innerHTML = "";  // Clear current conversation
+
+      conversation.forEach(function(message) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message");
+        
+        if (message.startsWith("User:")) {
+          messageElement.classList.add("user-message");
+          messageElement.textContent = message.slice(6); // Remove "User: " from the message
+        } else {
+          messageElement.classList.add("bot-message");
+          messageElement.textContent = message.slice(5); // Remove "Bot: " from the message
+        }
+
+        conversationDiv.appendChild(messageElement);
+      });
+      // Scroll to the bottom of the conversation
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+    }
+
+    // Send message and get response
+    chatForm.addEventListener("submit", async function(event) {
+      event.preventDefault();  // Prevent the form from reloading the page
+
+      // Get the user's message
+      const message = document.getElementById("message").value;
+
+      // Create the request payload
+      const requestPayload = {
+        message: message
+      };
+
+      try {
+        // Send a POST request to the Flask API
+        const response = await fetch("http://127.0.0.1:5000/chat", {
+          method: "POST",  // Set the HTTP method to POST
+          headers: {
+            "Content-Type": "application/json",  // Specify the content type
+          },
+          body: JSON.stringify(requestPayload),  // Send the JSON data
+        });
+
+        // Parse the response JSON
+        const data = await response.json();
+
+        // Display the chatbot's response
+        if (response.ok) {
+          // Append the user's message and the bot's response to the conversation
+          displayConversation(data.conversation);
+        } else {
+          // Handle errors
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+
+      // Clear the input field after sending the message
+      document.getElementById("message").value = "";
+    });
+
+    // Initial call to load the conversation history when the page loads
+    window.onload = function() {
+      // Initial empty conversation
+      displayConversation([]);
+    };
+  </script>
+
+</body>
+</html>
